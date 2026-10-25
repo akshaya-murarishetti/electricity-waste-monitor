@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Settings · Electricity Waste Monitor{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">Tariff & alert thresholds</div>
+      <div class="card-body">
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Default electricity tariff (₹ per kWh)</label>
+            <input type="number" name="default_tariff" class="form-control" value="{{ tariff }}" min="0" step="0.01" required>
+            <div class="form-text">Used for new calculations and records when not overridden.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">High-usage threshold (kWh per day)</label>
+            <input type="number" name="high_usage_threshold_kwh" class="form-control" value="{{ threshold }}" min="0" step="0.1" required>
+            <div class="form-text">
+              If a daily record exceeds this value, a “possible high usage” alert may be created.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Historical multiplier</label>
+            <input type="number" name="threshold_multiplier" class="form-control" value="{{ multiplier }}" min="1" step="0.1" required>
+            <div class="form-text">
+              Alert when consumption &gt; (historical average × this multiplier), if enough prior records exist (at least 3).
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save settings</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">About detection rules</div>
+      <div class="card-body small">
+        <p>
+          The system uses transparent, rule-based checks — not machine-learning claims.
+        </p>
+        <ol>
+          <li>Compare against your configured absolute threshold (kWh/day).</li>
+          <li>If there are enough past records, compare against average × multiplier.</li>
+        </ol>
+        <p class="mb-0 text-muted">
+          Alerts are labelled as <em>possible</em> high usage. They do not prove electricity was wasted.
+          Always verify entered power ratings and hours.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

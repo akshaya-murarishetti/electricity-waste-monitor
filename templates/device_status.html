@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Device Status · Electricity Waste Monitor{% endblock %}
+{% block page_title %}Device Integration Status{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Connection status</div>
+      <div class="card-body text-center py-4">
+        {% if connected %}
+          <div class="status-badge connected mb-3">
+            <i class="bi bi-check-circle-fill"></i> Device readings received
+          </div>
+          <p class="text-muted">
+            At least one reading has been stored via the device API.
+            Device data is kept separate from manual estimates.
+          </p>
+          {% if latest %}
+          <div class="text-start small border rounded p-3 bg-light">
+            <div><strong>Device ID:</strong> {{ latest.device_id }}</div>
+            <div><strong>Last timestamp:</strong> {{ latest.timestamp }}</div>
+            <div><strong>Energy:</strong> {{ latest.energy_kwh }} kWh</div>
+            {% if latest.power_watts is not none %}
+            <div><strong>Power:</strong> {{ latest.power_watts }} W</div>
+            {% endif %}
+            <div><strong>Received at:</strong> {{ latest.received_at }}</div>
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="status-badge disconnected mb-3">
+            <i class="bi bi-x-circle"></i> Device not connected
+          </div>
+          <p class="mb-2">
+            <strong>Device not connected — using estimated consumption.</strong>
+          </p>
+          <p class="text-muted small">
+            This application works without hardware. A compatible energy monitor
+            can post readings to the API below when available. Until valid readings
+            are received, the UI will not show “Device Connected”.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Future device API</div>
+      <div class="card-body small">
+        <p><code>POST /api/device-readings</code></p>
+        <p class="mb-1">JSON body example:</p>
+        <pre class="bg-light p-2 rounded">{
+  "device_id": "meter-01",
+  "timestamp": "2026-10-25T10:00:00",
+  "energy_kwh": 1.25,
+  "power_watts": 320
+}</pre>
+        <p class="text-muted mb-0">
+          Development-only style endpoint in this version (no full auth implemented).
+          Invalid or incomplete payloads are rejected. Do not claim secure production
+          device connectivity without proper authentication and testing.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Recent device readings</div>
+      <div class="card-body p-0">
+        {% if readings %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Timestamp</th>
+                <th>Energy kWh</th>
+                <th>Power W</th>
+                <th>Received</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in readings %}
+              <tr>
+                <td>{{ r.device_id }}</td>
+                <td>{{ r.timestamp }}</td>
+                <td>{{ r.energy_kwh }}</td>
+                <td>{{ r.power_watts if r.power_watts is not none else '—' }}</td>
+                <td class="small text-muted">{{ r.received_at }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-5">
+          <i class="bi bi-hdd-network"></i>
+          <p>No device readings received yet.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

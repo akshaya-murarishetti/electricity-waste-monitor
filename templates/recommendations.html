@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Recommendations · Electricity Waste Monitor{% endblock %}
+{% block page_title %}Smart Recommendations{% endblock %}
+
+{% block content %}
+<div class="alert alert-info">
+  <i class="bi bi-info-circle me-1"></i>
+  Suggestions are based on the appliances and records you entered. They do not guarantee a specific saving amount.
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Energy-saving suggestions</div>
+      <div class="card-body">
+        {% if recommendations %}
+          {% for rec in recommendations %}
+          <div class="rec-item mb-3">
+            <div class="d-flex align-items-start">
+              <div class="rec-icon me-3">
+                <i class="bi bi-lightbulb-fill text-warning"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">{{ rec.title }}</h6>
+                <p class="mb-0 text-muted">{{ rec.text }}</p>
+              </div>
+            </div>
+          </div>
+          {% if not loop.last %}<hr class="my-2">{% endif %}
+          {% endfor %}
+        {% else %}
+          <div class="empty-state py-4">
+            <p>Add appliances and consumption records to receive tailored recommendations.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header">Active alerts</div>
+      <div class="card-body">
+        {% if alerts %}
+          {% for a in alerts %}
+          <div class="alert alert-warning small mb-2">
+            <strong>{{ a.alert_type.replace('_', ' ')|title }}</strong>
+            <div class="mt-1">{{ a.message }}</div>
+            {% if a.threshold_value is not none %}
+            <div class="text-muted mt-1">Comparison value: {{ '%.2f'|format(a.threshold_value) }} kWh</div>
+            {% endif %}
+            <form method="post" action="{{ url_for('api_acknowledge_alert', alert_id=a.id) }}" class="mt-2 ack-form" data-id="{{ a.id }}">
+              <button type="button" class="btn btn-sm btn-outline-secondary ack-btn">Acknowledge</button>
+            </form>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted small mb-0">No active alerts.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Current appliances snapshot</div>
+      <div class="card-body p-0">
+        {% if appliances %}
+        <ul class="list-group list-group-flush">
+          {% for a in appliances %}
+          <li class="list-group-item d-flex justify-content-between small">
+            <span>{{ a.name }} ({{ a.power_watts }} W × {{ a.quantity }})</span>
+            <span class="text-muted">{{ a.hours_per_day }} h/day</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-3 text-muted small">No appliances saved.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.ack-btn').forEach(btn => {
+  btn.addEventListener('click', async function() {
+    const form = this.closest('.ack-form');
+    const id = form.dataset.id;
+    try {
+      const res = await fetch('/api/alerts/' + id + '/acknowledge', { method: 'POST' });
+      if (res.ok) {
+        form.closest('.alert').remove();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  });
+});
+</script>
+{% endblock %}

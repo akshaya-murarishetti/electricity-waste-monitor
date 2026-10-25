@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Records · Electricity Waste Monitor{% endblock %}
+{% block page_title %}Consumption History{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('download_csv', **request.args) }}" class="btn btn-sm btn-outline-success">
+  <i class="bi bi-download"></i> CSV report
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">Add consumption record</div>
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="action" value="add">
+          <div class="mb-3">
+            <label class="form-label">Date *</label>
+            <input type="date" name="record_date" class="form-control" value="{{ today }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Energy (kWh) *</label>
+            <input type="number" name="energy_kwh" class="form-control" min="0" step="0.001" required placeholder="e.g. 12.5">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tariff (₹/kWh)</label>
+            <input type="number" name="tariff_per_kwh" class="form-control" min="0" step="0.01" value="{{ tariff }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Source</label>
+            <select name="source_type" class="form-select">
+              <option value="estimate">Estimate</option>
+              <option value="sample">Sample data</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <input type="text" name="notes" class="form-control" placeholder="Optional">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Save record</button>
+        </form>
+        <p class="small text-muted mt-2 mb-0">
+          High values may trigger a “possible high usage” alert based on your threshold settings.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <form class="row g-2 align-items-end" method="get">
+          <div class="col-auto">
+            <label class="form-label small mb-0">From</label>
+            <input type="date" name="from" class="form-control form-control-sm" value="{{ from_date }}">
+          </div>
+          <div class="col-auto">
+            <label class="form-label small mb-0">To</label>
+            <input type="date" name="to" class="form-control form-control-sm" value="{{ to_date }}">
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
+            <a href="{{ url_for('records') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+          </div>
+        </form>
+      </div>
+      <div class="card-body p-0">
+        {% if records %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>kWh</th>
+                <th>Tariff</th>
+                <th>Est. cost</th>
+                <th>Source</th>
+                <th>Notes</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in records %}
+              <tr>
+                <td>{{ r.record_date }}</td>
+                <td>{{ '%.3f'|format(r.energy_kwh) }}</td>
+                <td>₹{{ '%.2f'|format(r.tariff_per_kwh) }}</td>
+                <td>₹{{ '%.2f'|format(r.estimated_cost) }}</td>
+                <td><span class="badge source-{{ r.source_type }}">{{ r.source_type }}</span></td>
+                <td class="small text-muted">{{ r.notes or '—' }}</td>
+                <td>
+                  <form method="post" class="d-inline" onsubmit="return confirm('Delete this record?');">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="id" value="{{ r.id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-5">
+          <i class="bi bi-journal-text"></i>
+          <p>No records in this range. Add a daily consumption entry.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
